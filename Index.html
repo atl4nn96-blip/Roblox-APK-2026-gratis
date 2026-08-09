@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casino Premium - Simulador</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0a3d0a, #051a05);
+            color: gold;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            text-shadow: 0 0 15px gold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .saldo {
+            background: rgba(0,0,0,0.6);
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 2px solid gold;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+        .ruleta {
+            width: 220px;
+            height: 220px;
+            border: 8px solid gold;
+            border-radius: 50%;
+            background: conic-gradient(red 0deg 120deg, black 120deg 240deg, green 240deg 360deg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            transition: transform 3s cubic-bezier(0.2, 0.8, 0.3, 1);
+            position: relative;
+        }
+        .ruleta::after {
+            content: "🎯";
+            position: absolute;
+            top: -25px;
+            font-size: 30px;
+        }
+        .ruleta.girando {
+            transform: rotate(1800deg);
+        }
+        .apuestas {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .boton-apuesta {
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .rojo { background: #ff3333; color: white; }
+        .negro { background: #222; color: white; }
+        .verde { background: #00aa00; color: white; }
+        .boton-apuesta:hover { transform: scale(1.1); box-shadow: 0 0 15px gold; }
+        .boton-apuesta:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .monto {
+            padding: 12px;
+            font-size: 1.2rem;
+            width: 150px;
+            text-align: center;
+            border-radius: 8px;
+            border: 2px solid gold;
+            background: #111;
+            color: gold;
+            margin-bottom: 20px;
+        }
+        .resultado {
+            font-size: 1.6rem;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            min-height: 60px;
+            font-weight: bold;
+        }
+        .ganaste { background: rgba(0,200,0,0.2); color: #00ff00; }
+        .perdiste { background: rgba(200,0,0,0.2); color: #ff4444; }
+        .aviso {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎰 CASINO PREMIUM 🎰</h1>
+    <div class="saldo">Saldo: $<span id="saldo">1000</span> USD</div>
+
+    <div class="ruleta" id="ruleta"></div>
+
+    <input type="number" id="monto" class="monto" value="100" min="10" placeholder="Monto a apostar">
+
+    <div class="apuestas">
+        <button class="boton-apuesta rojo" onclick="apostar('rojo')">🔴 ROJO x2</button>
+        <button class="boton-apuesta negro" onclick="apostar('negro')">⚫ NEGRO x2</button>
+        <button class="boton-apuesta verde" onclick="apostar('verde')">🟢 VERDE x10</button>
+    </div>
+
+    <div class="resultado" id="resultado"></div>
+
+    <div class="aviso">⚠️ Esto es solo una simulación de broma, no es dinero real ni apuestas reales</div>
+
+    <script>
+        let saldo = 1000;
+        let jugando = false;
+        const ruleta = document.getElementById('ruleta');
+        const textoSaldo = document.getElementById('saldo');
+        const textoResultado = document.getElementById('resultado');
+        const montoInput = document.getElementById('monto');
+
+        function actualizarSaldo() {
+            textoSaldo.textContent = saldo;
+        }
+
+        function apostar(colorElegido) {
+            if (jugando) return;
+            const monto = parseInt(montoInput.value);
+            
+            if (monto < 10 || isNaN(monto)) {
+                textoResultado.textContent = "❌ Ingresa un monto válido (mínimo $10)";
+                textoResultado.className = "resultado perdiste";
+                return;
+            }
+            if (monto > saldo) {
+                textoResultado.textContent = "❌ No tienes suficiente saldo";
+                textoResultado.className = "resultado perdiste";
+                return;
+            }
+
+            jugando = true;
+            textoResultado.textContent = "🎡 Girando la ruleta...";
+            textoResultado.className = "resultado";
+            ruleta.classList.add('girando');
+
+            // Sonido de monedas
+            if (navigator.vibrate) navigator.vibrate(50);
+
+            setTimeout(() => {
+                ruleta.classList.remove('girando');
+                const colores = ['rojo', 'rojo', 'rojo', 'negro', 'negro', 'negro', 'verde'];
+                const colorResultado = colores[Math.floor(Math.random() * colores.length)];
+
+                if (colorResultado === colorElegido) {
+                    let ganancia = colorElegido === 'verde' ? monto * 10 : monto * 2;
+                    saldo += ganancia;
+                    textoResultado.innerHTML = `🎉 ¡GANASTE! <br> Salió ${colorResultado} +$${ganancia}`;
+                    textoResultado.className = "resultado ganaste";
+                    if (navigator.vibrate) navigator.vibrate([100,50,100,50,200]);
+                } else {
+                    saldo -= monto;
+                    textoResultado.innerHTML = `😔 Perdiste $${monto} <br> Salió ${colorResultado}`;
+                    textoResultado.className = "resultado perdiste";
+                    if (navigator.vibrate) navigator.vibrate([200,100,200]);
+                }
+
+                if (saldo <= 0) {
+                    setTimeout(() => {
+                        alert("😎 ¡Broma! Te regalamos $5000 para seguir jugando");
+                        saldo = 5000;
+                        actualizarSaldo();
+                    }, 1000);
+                }
+
+                actualizarSaldo();
+                jugando = false;
+            }, 3000);
+        }
+    </script>
+
+</body>
+</html>
